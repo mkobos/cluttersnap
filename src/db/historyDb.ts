@@ -27,22 +27,30 @@ async function isAvailable(): Promise<boolean> {
 
 async function saveEntry(entry: HistoryEntry): Promise<number> {
   const db = await getDb();
-  const id = await db.add(STORE_NAME, entry) as number;
-  db.close();
-  return id;
+  try {
+    return await db.add(STORE_NAME, entry) as number;
+  } finally {
+    db.close();
+  }
 }
 
 async function getAllEntries(): Promise<HistoryEntry[]> {
   const db = await getDb();
-  const entries = await db.getAll(STORE_NAME) as HistoryEntry[];
-  db.close();
-  return entries.sort((a, b) => b.timestamp - a.timestamp);
+  try {
+    const entries = await db.getAll(STORE_NAME) as HistoryEntry[];
+    return entries.sort((a, b) => b.timestamp - a.timestamp);
+  } finally {
+    db.close();
+  }
 }
 
 async function deleteEntry(id: number): Promise<void> {
   const db = await getDb();
-  await db.delete(STORE_NAME, id);
-  db.close();
+  try {
+    await db.delete(STORE_NAME, id);
+  } finally {
+    db.close();
+  }
 }
 
 export const historyDb = { isAvailable, saveEntry, getAllEntries, deleteEntry };

@@ -51,8 +51,12 @@ export function useHistory(): UseHistoryReturn {
   }, []);
 
   const deleteEntry = useCallback(async (id: number) => {
-    await historyDb.deleteEntry(id);
-    setEntries(prev => prev.filter(e => e.id !== id));
+    try {
+      await historyDb.deleteEntry(id);
+      setEntries(prev => prev.filter(e => e.id !== id));
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to delete history entry');
+    }
   }, []);
 
   return { entries, isAvailable, saveEntry, deleteEntry, saveError };
