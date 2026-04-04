@@ -100,7 +100,7 @@ export function HistoryList({ entries, isAvailable, onSelect, onDelete, onClose 
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-slate-700">
         <h2 className="text-xl font-bold">History</h2>
-        <button onClick={onClose} className="text-slate-400 text-2xl leading-none">&times;</button>
+        <button onClick={onClose} aria-label="Close" className="text-slate-400 text-2xl leading-none">&times;</button>
       </div>
 
       {/* Content */}

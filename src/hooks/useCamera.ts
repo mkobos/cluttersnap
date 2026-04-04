@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, useState } from 'react';
 
 interface CaptureResult {
   imageData: ImageData;
@@ -8,11 +8,13 @@ interface CaptureResult {
 interface UseCameraReturn {
   videoRef: React.RefObject<HTMLVideoElement>;
   capture: () => CaptureResult;
+  streamError: string | null;
 }
 
 export function useCamera(): UseCameraReturn {
   const videoRef = useRef<HTMLVideoElement>(null!);
   const streamRef = useRef<MediaStream | null>(null);
+  const [streamError, setStreamError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -34,8 +36,10 @@ export function useCamera(): UseCameraReturn {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
-      } catch {
-        // Permission or capability errors handled by useCameraPermission
+      } catch (err) {
+        if (!cancelled) {
+          setStreamError(err instanceof Error ? err.message : 'Camera unavailable');
+        }
       }
     })();
 
@@ -66,5 +70,5 @@ export function useCamera(): UseCameraReturn {
     return { imageData, dataUrl };
   }, []);
 
-  return { videoRef, capture };
+  return { videoRef, capture, streamError };
 }

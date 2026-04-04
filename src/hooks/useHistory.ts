@@ -18,12 +18,16 @@ export function useHistory(): UseHistoryReturn {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const available = await historyDb.isAvailable();
-      if (cancelled) return;
-      setIsAvailable(available);
-      if (available) {
-        const all = await historyDb.getAllEntries();
-        if (!cancelled) setEntries(all);
+      try {
+        const available = await historyDb.isAvailable();
+        if (cancelled) return;
+        setIsAvailable(available);
+        if (available) {
+          const all = await historyDb.getAllEntries();
+          if (!cancelled) setEntries(all);
+        }
+      } catch {
+        // DB unavailable — isAvailable remains false, entries remain empty
       }
     })();
     return () => { cancelled = true; };

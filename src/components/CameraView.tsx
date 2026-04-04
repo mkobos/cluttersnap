@@ -19,7 +19,7 @@ export function CameraView({
   updateAvailable,
 }: CameraViewProps) {
   const { dispatch } = useAppContext();
-  const { videoRef, capture } = useCamera();
+  const { videoRef, capture, streamError } = useCamera();
   const [isCapturing, setIsCapturing] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [idbNoticeShown, setIdbNoticeShown] = useState(false);
@@ -42,6 +42,12 @@ export function CameraView({
       return () => clearTimeout(t);
     }
   }, [saveError]);
+
+  useEffect(() => {
+    if (streamError) {
+      setToast(streamError);
+    }
+  }, [streamError]);
 
   const handleCapture = useCallback(async () => {
     if (isCapturing) return;
