@@ -44,6 +44,7 @@ export function appReducer(state: AppState, action: Action): AppState {
         capturedImageUrl: null,
         analysisResult: null,
         resultSource: null,
+        error: null,
       };
 
     case 'SHOW_HISTORY':

@@ -52,6 +52,12 @@ describe('appReducer', () => {
     expect(state.analysisResult).toBeNull();
   });
 
+  it('RETAKE clears error field', () => {
+    const prev: AppState = { ...initialState, screen: 'result', error: 'some error', capturedImageUrl: 'url', analysisResult: null, resultSource: 'capture' };
+    const state = appReducer(prev, { type: 'RETAKE' });
+    expect(state.error).toBeNull();
+  });
+
   it('SHOW_HISTORY transitions to history screen', () => {
     const prev: AppState = { ...initialState, screen: 'camera', isModelLoading: false };
     const state = appReducer(prev, { type: 'SHOW_HISTORY' });
