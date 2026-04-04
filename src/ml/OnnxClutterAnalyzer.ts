@@ -1,9 +1,10 @@
 import type { ClutterAnalyzer, AnalysisResult } from '../types';
+import type { InferenceSession } from 'onnxruntime-web';
 import { preprocessImage } from './imagePreprocessor';
 import { computeEigenCam } from './eigenCam';
 
 export class OnnxClutterAnalyzer implements ClutterAnalyzer {
-  private session: unknown = null;
+  private session: InferenceSession | null = null;
   private readonly modelUrl: string;
 
   constructor(modelUrl: string) {
@@ -11,6 +12,7 @@ export class OnnxClutterAnalyzer implements ClutterAnalyzer {
   }
 
   async load(): Promise<void> {
+    // Dynamic import keeps onnxruntime-web out of Vite's pre-bundling (see vite.config.ts optimizeDeps.exclude)
     const ort = await import('onnxruntime-web');
     this.session = await ort.InferenceSession.create(this.modelUrl, {
       executionProviders: ['webgl', 'wasm'],
@@ -18,14 +20,13 @@ export class OnnxClutterAnalyzer implements ClutterAnalyzer {
   }
 
   async analyze(imageData: ImageData): Promise<AnalysisResult> {
-    const ort = await import('onnxruntime-web');
     if (!this.session) throw new Error('Model not loaded. Call load() first.');
-    const session = this.session as any;
 
+    const ort = await import('onnxruntime-web');
     const inputTensor = preprocessImage(imageData);
     const tensor = new ort.Tensor('float32', inputTensor, [1, 3, 224, 224]);
-    const feeds = { input: tensor };
-    const results = await session.run(feeds);
+    const feeds: Record<string, typeof tensor> = { input: tensor };
+    const results = await this.session.run(feeds);
 
     // Extract score
     const scoreData = results['score'].data as Float32Array;
@@ -37,7 +38,7 @@ export class OnnxClutterAnalyzer implements ClutterAnalyzer {
     // Extract feature map and compute heatmap
     const featureMapTensor = results['feature_map'];
     const featureMapData = featureMapTensor.data as Float32Array;
-    const [, C, H, W] = featureMapTensor.dims;
+    const [, C, H, W] = featureMapTensor.dims as [number, number, number, number];
     const heatmap = computeEigenCam(featureMapData, C, H, W);
 
     return { score, heatmap, heatmapWidth: W, heatmapHeight: H };
