@@ -21,28 +21,37 @@ export function ResultView({ imageUrl, result, resultSource, onRetake, onBack }:
   }, [imageUrl]);
 
   const handleImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
-    const img = e.currentTarget;
-    const container = containerRef.current;
-    if (!container) return;
+    // Capture natural dimensions synchronously before the event becomes stale.
+    const naturalWidth = e.currentTarget.naturalWidth;
+    const naturalHeight = e.currentTarget.naturalHeight;
 
-    const containerWidth = container.clientWidth;
-    const containerHeight = container.clientHeight;
+    // Defer reading container dimensions until after browser layout. When the
+    // image is already cached (e.g. coming from the Analyzing screen), the load
+    // event fires before the browser has computed layout for the new component,
+    // so clientWidth/clientHeight would be 0 without this deferral.
+    requestAnimationFrame(() => {
+      if (!containerRef.current) return;
 
-    const imgAspect = img.naturalWidth / img.naturalHeight;
-    const containerAspect = containerWidth / containerHeight;
+      const containerWidth = containerRef.current.clientWidth;
+      const containerHeight = containerRef.current.clientHeight;
+      if (containerWidth === 0 || containerHeight === 0) return;
 
-    let renderedWidth: number;
-    let renderedHeight: number;
+      const imgAspect = naturalWidth / naturalHeight;
+      const containerAspect = containerWidth / containerHeight;
 
-    if (imgAspect > containerAspect) {
-      renderedWidth = containerWidth;
-      renderedHeight = containerWidth / imgAspect;
-    } else {
-      renderedHeight = containerHeight;
-      renderedWidth = containerHeight * imgAspect;
-    }
+      let renderedWidth: number;
+      let renderedHeight: number;
 
-    setDisplaySize({ width: Math.round(renderedWidth), height: Math.round(renderedHeight) });
+      if (imgAspect > containerAspect) {
+        renderedWidth = containerWidth;
+        renderedHeight = containerWidth / imgAspect;
+      } else {
+        renderedHeight = containerHeight;
+        renderedWidth = containerHeight * imgAspect;
+      }
+
+      setDisplaySize({ width: Math.round(renderedWidth), height: Math.round(renderedHeight) });
+    });
   }, []);
 
   return (
