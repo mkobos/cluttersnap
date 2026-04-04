@@ -74,72 +74,13 @@ The ONNX model file (`clutter_model.onnx`) is served as a static asset. It is as
 
 ---
 
-## Package Dependencies
-
-```json
-{
-  "dependencies": {
-    "react": "^18.3.0",
-    "react-dom": "^18.3.0",
-    "onnxruntime-web": "^1.18.0",
-    "idb": "^8.0.0"
-  },
-  "devDependencies": {
-    "typescript": "^5.4.0",
-    "vite": "^5.2.0",
-    "vite-plugin-pwa": "^0.20.0",
-    "@vitejs/plugin-react": "^4.2.0",
-    "tailwindcss": "^3.4.0",
-    "workbox-window": "^7.1.0"
-  }
-}
-```
-
----
-
 ## Vite Configuration
 
-```typescript
-// vite.config.ts
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import { VitePWA } from 'vite-plugin-pwa';
+Key decisions in `vite.config.ts`:
 
-export default defineConfig({
-  plugins: [
-    react(),
-    VitePWA({
-      registerType: 'prompt',  // controls browser install prompt; app-level update banner uses workbox-window's 'waiting' event (see App.tsx)
-      workbox: {
-        // Cache the model file on first load for offline use.
-        // revision is VITE_MODEL_VERSION (set in .env files) — only bump when the model file itself changes,
-        // not on every UI deploy, to avoid unnecessary re-downloads of a 10–30MB file.
-        additionalManifestEntries: [
-          { url: '/models/clutter_model.onnx', revision: process.env.VITE_MODEL_VERSION ?? null }
-        ],
-        maximumFileSizeToCacheInBytes: 100 * 1024 * 1024  // 100MB
-      },
-      manifest: {
-        name: 'Clutter Detector',
-        short_name: 'Clutter',
-        theme_color: '#0f172a',
-        background_color: '#0f172a',
-        display: 'standalone',
-        orientation: 'any',
-        icons: [
-          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' }
-        ]
-      }
-    })
-  ],
-  optimizeDeps: {
-    // onnxruntime-web must be excluded from Vite's dependency pre-bundling because it
-    // loads WASM files and web workers via dynamic imports that break under Vite's optimizer.
-    exclude: ['onnxruntime-web']
-  }
-});
-```
+- `onnxruntime-web` is excluded from Vite's dependency pre-bundling because it loads WASM files and web workers via dynamic imports that break under Vite's optimizer.
+- The ONNX model file is added to the Workbox precache manifest so it is cached on first load for offline use. Its cache revision is `VITE_MODEL_VERSION` — only bump this when the model file itself changes, not on every UI deploy, to avoid unnecessary re-downloads of a 10–30MB file.
+- `registerType: 'prompt'` in `vite-plugin-pwa` controls the browser's install prompt only. The in-app "New version available" banner is driven by an explicit `waiting` event listener in `App.tsx`.
 
 ---
 
@@ -149,92 +90,20 @@ During development the real ONNX model will not be available. A mock implementat
 
 ### ClutterAnalyzer Interface
 
-```typescript
-export interface AnalysisResult {
-  score: number;           // 1.0–10.0
-  heatmap: Float32Array;   // flattened [H*W], normalized 0–1, row-major
-  heatmapWidth: number;    // e.g. 7
-  heatmapHeight: number;   // e.g. 7
-}
+`ClutterAnalyzer` exposes two methods: `load(): Promise<void>` and `analyze(imageData: ImageData): Promise<AnalysisResult>`.
 
-export interface ClutterAnalyzer {
-  load(): Promise<void>;
-  analyze(imageData: ImageData): Promise<AnalysisResult>;
-}
-```
+`AnalysisResult` contains: `score` (float 1.0–10.0), `heatmap` (Float32Array, flattened `[H*W]`, normalized 0–1, row-major), `heatmapWidth`, and `heatmapHeight`.
 
-### MockClutterAnalyzer.ts
+### MockClutterAnalyzer
 
-```typescript
-export class MockClutterAnalyzer implements ClutterAnalyzer {
-
-  async load(): Promise<void> {
-    // Simulate model loading delay
-    await delay(800);
-  }
-
-  async analyze(_imageData: ImageData): Promise<AnalysisResult> {
-    // Simulate inference latency
-    await delay(1200);
-
-    const score = randomFloat(1.0, 10.0);
-    const W = 7, H = 7;
-    const heatmap = generateMockHeatmap(W, H);
-
-    return { score, heatmap, heatmapWidth: W, heatmapHeight: H };
-  }
-}
-
-function generateMockHeatmap(W: number, H: number): Float32Array {
-  // Place 1–3 gaussian hot spots for a spatially coherent result
-  const grid = new Float32Array(W * H);
-  const numSpots = randomInt(1, 3);
-
-  for (let i = 0; i < numSpots; i++) {
-    const cx = randomFloat(0, W - 1);
-    const cy = randomFloat(0, H - 1);
-    const intensity = randomFloat(0.5, 1.0);
-    const sigma = randomFloat(1.0, 2.5);
-
-    for (let y = 0; y < H; y++) {
-      for (let x = 0; x < W; x++) {
-        const dist = (x - cx) ** 2 + (y - cy) ** 2;
-        grid[y * W + x] += intensity * Math.exp(-dist / (2 * sigma ** 2));
-      }
-    }
-  }
-
-  const max = Math.max(...grid);
-  return max > 0 ? grid.map(v => v / max) : grid;
-}
-```
+Simulates model loading (~800ms delay) and inference (~1200ms delay). Returns a random score and a spatially coherent heatmap generated by placing 1–3 Gaussian hot spots on a 7×7 grid.
 
 ### Switching Between Mock and Real
 
-```typescript
-// src/ml/analyzerFactory.ts
-import { MockClutterAnalyzer } from './MockClutterAnalyzer';
-import { OnnxClutterAnalyzer } from './OnnxClutterAnalyzer';
+Controlled by `VITE_USE_MOCK_MODEL` env var (see `analyzerFactory.ts`).
 
-export function createAnalyzer(): ClutterAnalyzer {
-  if (import.meta.env.VITE_USE_MOCK_MODEL === 'true') {
-    return new MockClutterAnalyzer();
-  }
-  return new OnnxClutterAnalyzer('/models/clutter_model.onnx');
-}
-```
-
-In `.env.development`:
-```
-VITE_USE_MOCK_MODEL=true
-VITE_MODEL_VERSION=dev
-```
-
-In `.env.production`:
-```
-VITE_USE_MOCK_MODEL=false
-VITE_MODEL_VERSION=1
-```
+`.env.development`: `VITE_USE_MOCK_MODEL=true`, `VITE_MODEL_VERSION=dev`  
+`.env.production`: `VITE_USE_MOCK_MODEL=false`, `VITE_MODEL_VERSION=1`
 
 Bump `VITE_MODEL_VERSION` in `.env.production` only when the ONNX model file itself is updated.
 
@@ -258,12 +127,7 @@ Converts an `ImageData` object (from a canvas capture) to a normalized `Float32A
 
 Wraps the ONNX Runtime Web session.
 
-- `load()` fetches and initializes the ONNX session. Use the WebGL execution provider first, falling back to WASM:
-  ```typescript
-  const session = await InferenceSession.create(modelUrl, {
-    executionProviders: ['webgl', 'wasm']
-  });
-  ```
+- `load()` fetches and initializes the ONNX session. Use the WebGL execution provider first, falling back to WASM.
 - `analyze(imageData)` runs the full pipeline:
   1. Call `imagePreprocessor` to get the input tensor
   2. Run the ONNX session
@@ -306,20 +170,9 @@ Handles camera permission request only — used by the Loading screen.
 Manages the `getUserMedia` stream and frame capture. Mounted only inside `CameraView`.
 
 - Creates and returns a `videoRef` for the component to attach to the `<video>` element
-- On mount, acquires the camera stream:
-  ```typescript
-  const stream = await navigator.mediaDevices.getUserMedia({
-    video: {
-      facingMode: { ideal: 'environment' },  // rear camera on mobile; ideal (not exact) falls back silently if unavailable
-      width: { ideal: 1280 },
-      height: { ideal: 720 }
-    }
-  });
-  ```
+- On mount, acquires the camera stream with `facingMode: { ideal: 'environment' }`, `width: { ideal: 1280 }`, `height: { ideal: 720 }`. `ideal` (not `exact`) falls back silently if unavailable.
 - Attaches the stream to the video element via the ref
-- Exposes a `capture()` function that:
-  1. Draws the current video frame to an offscreen canvas
-  2. Returns `{ imageData: ImageData, dataUrl: string }`
+- Exposes a `capture()` function that draws the current video frame to an offscreen canvas and returns `{ imageData: ImageData, dataUrl: string }`
 - Cleans up the stream on unmount
 
 **iOS:** the `<video>` element must have `playsinline` and `muted` attributes.
@@ -328,34 +181,11 @@ Manages the `getUserMedia` stream and frame capture. Mounted only inside `Camera
 
 ## Application State
 
-```typescript
-type Screen = 'camera' | 'analyzing' | 'result' | 'history';
+Managed in `AppContext.tsx` via `useReducer`. The state has four screens (`camera`, `analyzing`, `result`, `history`) and tracks: the captured image URL, the last analysis result, any error message, model loading status, how the result screen was reached (`resultSource: 'capture' | 'history'`), and whether a service worker update is waiting.
 
-interface AppState {
-  screen: Screen;
-  capturedImageUrl: string | null;
-  analysisResult: AnalysisResult | null;
-  error: string | null;
-  isModelLoading: boolean;
-  resultSource: 'capture' | 'history' | null;  // tracks how the result screen was reached
-  updateAvailable: boolean;                     // true when a new SW version is waiting
-}
+Actions cover the full user flow: `MODEL_LOADED`, `CAPTURE`, `ANALYSIS_COMPLETE`, `ERROR`, `RETAKE`, `SHOW_HISTORY`, `HIDE_HISTORY`, `VIEW_HISTORY_RESULT`, `BACK_TO_HISTORY`, and `UPDATE_AVAILABLE`.
 
-type Action =
-  | { type: 'MODEL_LOADED' }
-  | { type: 'CAPTURE'; imageUrl: string }
-  | { type: 'ANALYSIS_COMPLETE'; result: AnalysisResult }
-  | { type: 'ERROR'; message: string }
-  | { type: 'RETAKE' }              // clears capturedImageUrl + analysisResult, returns to camera
-  | { type: 'SHOW_HISTORY' }
-  | { type: 'HIDE_HISTORY' }        // returns to camera without clearing capture state
-  | { type: 'VIEW_HISTORY_RESULT'; imageUrl: string; result: AnalysisResult }  // opens a historical result
-  | { type: 'BACK_TO_HISTORY' }     // from result screen back to history overlay
-  | { type: 'UPDATE_AVAILABLE' };   // service worker has a new version ready
-
-// Note: ImageData for inference is NOT stored in AppState. CameraView stores it in a
-// local ref after capture() and passes it directly to analyzer.analyze().
-```
+Note: `ImageData` for inference is NOT stored in `AppState`. `CameraView` holds it in a local ref after `capture()` and passes it directly to `analyzer.analyze()`.
 
 ---
 
@@ -365,7 +195,7 @@ type Action =
 
 - On mount, calls `analyzer.load()` and dispatches `MODEL_LOADED` when ready
 - Renders the correct screen based on `AppState.screen`; does not mount `CameraView` until `isModelLoading` is false
-- Listens for service worker updates using `workbox-window`'s `Workbox` class: registers the SW, listens for the `waiting` event, and dispatches `UPDATE_AVAILABLE` when a new version is ready. Note: `registerType: 'prompt'` in `vite-plugin-pwa` only controls the browser's install prompt — the app-level "New version available" banner requires this explicit `waiting` event listener.
+- Listens for service worker updates using `workbox-window`'s `Workbox` class: registers the SW, listens for the `waiting` event, and dispatches `UPDATE_AVAILABLE` when a new version is ready.
 - The banner is rendered only when `AppState.screen === 'camera'` — never on the analyzing or result screens.
 
 ### CameraView.tsx
@@ -443,25 +273,11 @@ Owns all IndexedDB interaction. Mounted in `App.tsx`.
 
 Database: `"cluttersnap"`, object store: `"history"` (via `idb`).
 
-```typescript
-interface HistoryEntry {
-  id?: number;
-  score: number;
-  imageDataUrl: string;          // base64 JPEG of the full captured photo
-  thumbnailDataUrl: string;      // base64 JPEG thumbnail, 200px width, for list rendering
-  heatmap: Float32Array;         // flattened heatmap, normalized 0–1, row-major
-  heatmapWidth: number;
-  heatmapHeight: number;
-  timestamp: number;             // Date.now()
-}
-```
+Each `HistoryEntry` stores: `id`, `score`, `imageDataUrl` (full JPEG), `thumbnailDataUrl` (200px-wide JPEG, quality 0.7), `heatmap` (Float32Array, flattened, normalized 0–1), `heatmapWidth`, `heatmapHeight`, `timestamp` (Date.now()).
 
-- `isAvailable(): Promise<boolean>` — attempts to open the DB; returns false on any error (e.g. private browsing, security restrictions)
-- `saveEntry(entry: HistoryEntry): Promise<number>` — saves and returns the generated id
-- `getAllEntries(): Promise<HistoryEntry[]>` — returns all entries ordered by timestamp descending
-- `deleteEntry(id: number): Promise<void>`
+The thumbnail is used for the history list; the full photo is used when reopening a result from history.
 
-Both the full photo and a 200px-wide JPEG thumbnail (quality 0.7) are stored. The thumbnail is used for the history list; the full photo is used when reopening a result from history.
+`historyDb.ts` exposes: `isAvailable()`, `saveEntry(entry)`, `getAllEntries()` (ordered by timestamp descending), and `deleteEntry(id)`.
 
 ---
 
