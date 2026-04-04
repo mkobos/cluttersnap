@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useCamera } from '../hooks/useCamera';
 import { useAppContext } from '../context/AppContext';
 import type { ClutterAnalyzer, AnalysisResult } from '../types';
@@ -20,7 +20,7 @@ export function CameraView({
 }: CameraViewProps) {
   const { dispatch } = useAppContext();
   const { videoRef, capture } = useCamera();
-  const imageDataRef = useRef<ImageData | null>(null);
+  const [isCapturing, setIsCapturing] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [idbNoticeShown, setIdbNoticeShown] = useState(false);
 
@@ -29,7 +29,8 @@ export function CameraView({
     if (!historyAvailable && !idbNoticeShown) {
       setToast('History feature is disabled in this browser mode.');
       setIdbNoticeShown(true);
-      setTimeout(() => setToast(null), 4000);
+      const t = setTimeout(() => setToast(null), 4000);
+      return () => clearTimeout(t);
     }
   }, [historyAvailable, idbNoticeShown]);
 
@@ -43,24 +44,24 @@ export function CameraView({
   }, [saveError]);
 
   const handleCapture = useCallback(async () => {
+    if (isCapturing) return;
+    setIsCapturing(true);
     try {
       const { imageData, dataUrl } = capture();
-      imageDataRef.current = imageData;
       dispatch({ type: 'CAPTURE', imageUrl: dataUrl });
 
       const result = await analyzer.analyze(imageData);
       dispatch({ type: 'ANALYSIS_COMPLETE', result });
 
-      // Save to history (fire-and-forget; saveError surfaces via prop)
       if (historyAvailable) {
         await onHistorySave(result, dataUrl);
       }
     } catch (err) {
       dispatch({ type: 'ERROR', message: err instanceof Error ? err.message : 'Analysis failed' });
     } finally {
-      imageDataRef.current = null;
+      setIsCapturing(false);
     }
-  }, [analyzer, capture, dispatch, historyAvailable, onHistorySave]);
+  }, [isCapturing, analyzer, capture, dispatch, historyAvailable, onHistorySave]);
 
   return (
     <div className="relative h-screen bg-black">
@@ -98,7 +99,8 @@ export function CameraView({
       <div className="absolute bottom-8 left-0 right-0 flex justify-center">
         <button
           onClick={handleCapture}
-          className="w-18 h-18 rounded-full border-4 border-white bg-white/20 active:bg-white/40"
+          disabled={isCapturing}
+          className="rounded-full border-4 border-white bg-white/20 active:bg-white/40 disabled:opacity-50"
           style={{ width: 72, height: 72 }}
           aria-label="Capture"
         />

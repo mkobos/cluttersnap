@@ -42,7 +42,7 @@ function AppInner() {
           dispatch({ type: 'UPDATE_AVAILABLE' });
         });
         wb.register();
-      });
+      }).catch(console.error);
     }
   }, [dispatch]);
 
@@ -60,7 +60,7 @@ function AppInner() {
   }
 
   // Handle permission errors on camera screen
-  if (permissionState === 'denied' || permissionState === 'unsupported') {
+  if (permissionState !== 'granted' && state.screen === 'camera') {
     return (
       <LoadingScreen
         error={null}
