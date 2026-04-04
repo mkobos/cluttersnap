@@ -58,7 +58,7 @@ function SwipeableItem({ entry, onSelect, onDelete }: SwipeableItemProps) {
   const handleTouchEnd = () => {
     isDraggingRef.current = false;
     // If swiped far enough, keep the delete button visible
-    setOffsetX(offsetX < -80 ? -100 : 0);
+    setOffsetX(prev => (prev < -80 ? -100 : 0));
   };
 
   return (
@@ -117,7 +117,7 @@ export function HistoryList({ entries, isAvailable, onSelect, onDelete, onClose 
           <div className="divide-y divide-slate-700">
             {entries.map(entry => (
               <SwipeableItem
-                key={entry.id}
+                key={entry.id ?? entry.timestamp}
                 entry={entry}
                 onSelect={() =>
                   onSelect(entry.imageDataUrl, {

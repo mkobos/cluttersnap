@@ -15,9 +15,10 @@ interface HeatmapOverlayProps {
  * Interpolates linearly (decreasing hue) through these stops.
  */
 function heatmapValueToRgb(value: number): [number, number, number] {
-  const hue = value <= 0.5
-    ? 240 - (value / 0.5) * 180   // 240 → 60
-    : 60 - ((value - 0.5) / 0.5) * 60; // 60 → 0
+  const v = Math.max(0, Math.min(1, value));
+  const hue = v <= 0.5
+    ? 240 - (v / 0.5) * 180
+    : 60 - ((v - 0.5) / 0.5) * 60;
 
   const h = hue / 60;
   const i = Math.floor(h);
@@ -51,8 +52,8 @@ function bilinearInterpolate(
 
   for (let y = 0; y < outH; y++) {
     for (let x = 0; x < outW; x++) {
-      const gx = (x / outW) * (gridW - 1);
-      const gy = (y / outH) * (gridH - 1);
+      const gx = outW > 1 ? (x / (outW - 1)) * (gridW - 1) : 0;
+      const gy = outH > 1 ? (y / (outH - 1)) * (gridH - 1) : 0;
 
       const x0 = Math.floor(gx);
       const y0 = Math.floor(gy);

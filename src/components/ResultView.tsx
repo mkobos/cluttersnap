@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { HeatmapOverlay } from './HeatmapOverlay';
 import { ScoreDisplay } from './ScoreDisplay';
 import type { AnalysisResult } from '../types';
@@ -15,6 +15,10 @@ export function ResultView({ imageUrl, result, resultSource, onRetake, onBack }:
   const [opacity, setOpacity] = useState(0.5);
   const [displaySize, setDisplaySize] = useState({ width: 0, height: 0 });
   const containerRef = useRef<HTMLDivElement>(null!);
+
+  useEffect(() => {
+    setDisplaySize({ width: 0, height: 0 });
+  }, [imageUrl]);
 
   const handleImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
