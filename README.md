@@ -1,5 +1,7 @@
 # Clutter Detector
 
+[![Tests](https://github.com/mkobos/cluttersnap/actions/workflows/test.yml/badge.svg)](https://github.com/mkobos/cluttersnap/actions/workflows/test.yml)
+
 A Progressive Web App that analyzes room photos and produces a clutter score and heatmap overlay. All ML inference runs fully in the browser via ONNX Runtime Web.
 
 ## Development
