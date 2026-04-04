@@ -20,9 +20,10 @@ describe('computeEigenCam', () => {
 
   it('all values are in [0, 1]', () => {
     const C = 4, H = 3, W = 3;
+    // Deterministic input: linear ramp to test full value range
     const featureMap = new Float32Array(C * H * W);
     for (let i = 0; i < featureMap.length; i++) {
-      featureMap[i] = Math.random() * 10;
+      featureMap[i] = (i % 7) * 1.5; // varies 0..9, no pattern-based bias
     }
     const result = computeEigenCam(featureMap, C, H, W);
     for (let i = 0; i < result.length; i++) {

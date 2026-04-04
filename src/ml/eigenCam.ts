@@ -16,6 +16,12 @@ export function computeEigenCam(
 ): Float32Array {
   const spatialSize = H * W;
 
+  if (featureMap.length !== C * spatialSize) {
+    throw new Error(
+      `featureMap length ${featureMap.length} does not match C*H*W = ${C}*${H}*${W} = ${C * spatialSize}`
+    );
+  }
+
   // M is [C, spatialSize] — featureMap is already in this layout
   // We need the dominant right singular vector of M via power iteration on M^T M
 

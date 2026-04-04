@@ -22,11 +22,13 @@ export function preprocessImage(imageData: ImageData): Float32Array {
 function resizeImageData(imageData: ImageData): Uint8ClampedArray {
   // Use OffscreenCanvas for browser resize
   const srcCanvas = new OffscreenCanvas(imageData.width, imageData.height);
-  const srcCtx = srcCanvas.getContext('2d')!;
+  const srcCtx = srcCanvas.getContext('2d');
+  if (!srcCtx) throw new Error('Could not acquire 2D context on OffscreenCanvas');
   srcCtx.putImageData(imageData, 0, 0);
 
   const dstCanvas = new OffscreenCanvas(SIZE, SIZE);
-  const dstCtx = dstCanvas.getContext('2d')!;
+  const dstCtx = dstCanvas.getContext('2d');
+  if (!dstCtx) throw new Error('Could not acquire 2D context on OffscreenCanvas');
   dstCtx.drawImage(srcCanvas, 0, 0, SIZE, SIZE);
 
   return dstCtx.getImageData(0, 0, SIZE, SIZE).data;
