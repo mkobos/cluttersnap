@@ -15,13 +15,14 @@ const ANIMATION_DURATION_MS = 800;
 export function ScoreDisplay({ score }: ScoreDisplayProps) {
   const rounded = Math.round(score);
   const [displayValue, setDisplayValue] = useState(0);
-  const startTimeRef = useRef<number>(0);
+  const startTimeRef = useRef<number | null>(null);
   const rafRef = useRef<number>(0);
 
   useEffect(() => {
-    startTimeRef.current = 0;
+    startTimeRef.current = null;
 
     function animate(timestamp: number) {
+      if (startTimeRef.current === null) startTimeRef.current = timestamp;
       const elapsed = timestamp - startTimeRef.current;
       const progress = Math.min(elapsed / ANIMATION_DURATION_MS, 1);
       setDisplayValue(Math.round(progress * rounded));

@@ -49,6 +49,9 @@ export function useCamera(): UseCameraReturn {
   const capture = useCallback((): CaptureResult => {
     const video = videoRef.current;
     if (!video) throw new Error('Video element not available');
+    if (!video.videoWidth || !video.videoHeight) {
+      throw new Error('Video dimensions not yet available');
+    }
 
     const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth;
