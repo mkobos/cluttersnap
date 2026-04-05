@@ -13,8 +13,8 @@ A Progressive Web App that analyzes room photos and produces a clutter score and
 python3 -m venv .venv
 .venv/bin/pip install -r api/requirements.txt
 
-# Start the API with mock model (no ONNX file required)
-USE_MOCK_MODEL=true uvicorn api.index:app --reload
+# Start the API with mock model (MODEL_URL environment variable not set)
+uvicorn api.index:app --reload
 
 # Run Python tests
 .venv/bin/pytest tests/api/
@@ -42,16 +42,13 @@ Hosted on Vercel. The project contains both the Vite React frontend and the Fast
 
 ### Required environment variables
 
-| Variable | Description |
-|---|---|
-| `MODEL_BLOB_URL` | Public URL of the `.onnx` model file in Vercel Blob |
-| `USE_MOCK_MODEL` | Set to `true` to skip ONNX inference (development / staging) |
+- `MODEL_URL` - Public URL of the `.onnx` model file in Vercel Blob. If missing, skip ONNX inference (development / staging).
 
 ### Updating the model
 
 1. Train with PyTorch and export: `torch.onnx.export(...)`
 2. Upload `clutter_model.onnx` to Vercel Blob
-3. Update `MODEL_BLOB_URL` in the Vercel project settings
+3. Update `MODEL_URL` in the Vercel project settings
 4. Redeploy the API
 
 ## Documentation

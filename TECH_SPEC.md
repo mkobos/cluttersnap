@@ -164,7 +164,7 @@ Computes a spatial heatmap from the model's feature map and upsamples it to the 
 
 ### mock_analyzer.py
 
-Returns a synthetic result when `USE_MOCK_MODEL=true`. Places 1–3 Gaussian hot spots at random positions on a zero-filled grid of the input image's dimensions, then normalizes the result to [0, 1]. Score is a uniform random float in [1.0, 10.0].
+Returns a synthetic result when `MODEL_URL` is missing. Places 1–3 Gaussian hot spots at random positions on a zero-filled grid of the input image's dimensions, then normalizes the result to [0, 1]. Score is a uniform random float in [1.0, 10.0].
 
 ### analyzer.py
 
@@ -172,7 +172,7 @@ Wraps an `onnxruntime.InferenceSession`. `load()` creates the session from the m
 
 ### index.py
 
-FastAPI entry point. On cold start, downloads the ONNX model from `MODEL_BLOB_URL` to `/tmp/clutter_model.onnx` and creates the singleton `OnnxAnalyzer`. Warm invocations reuse the cached session. When `USE_MOCK_MODEL=true`, skips model loading entirely and delegates to `mock_analyzer`.
+FastAPI entry point. On cold start, downloads the ONNX model from `MODEL_URL` to `/tmp/clutter_model.onnx` and creates the singleton `OnnxAnalyzer`. Warm invocations reuse the cached session. When `MODEL_URL` is missing, skips model loading entirely and delegates to `mock_analyzer`.
 
 ---
 
@@ -288,7 +288,7 @@ Each `HistoryEntry` stores: `id`, `score`, `imageDataUrl` (full JPEG), `thumbnai
 ## Implementation Notes
 
 - **HTTPS is required.** `getUserMedia` is blocked on non-HTTPS origins. Use `vite --https` locally; Vercel serves over HTTPS by default.
-- **Model on Vercel Blob.** The Python function downloads the ONNX file from `MODEL_BLOB_URL` on cold start and caches it to `/tmp`. Warm invocations skip the download. Update the URL when the model changes.
+- **Model on Vercel Blob.** The Python function downloads the ONNX file from `MODEL_URL` on cold start and caches it to `/tmp`. Warm invocations skip the download. Update the URL when the model changes.
 - **Preprocessing must exactly match training.** Running the same test image through `preprocessor.py` and through the original training pipeline should produce the same ONNX output (score tolerance ~0.1). A larger mismatch indicates a normalization bug.
 - **No offline inference.** The app requires network access to call the API. History viewing works offline (IndexedDB), but capture and analysis require connectivity.
 - **Bundle size.** Removing `onnxruntime-web` eliminates ~15 MB from the JS bundle and the 10–30 MB model download on first visit.

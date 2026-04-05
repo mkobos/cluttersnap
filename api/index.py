@@ -39,21 +39,20 @@ def _download_in_chunks(url: str, dest_path: str) -> None:
             f.write(chunk)
 
 
-def _download_model() -> OnnxAnalyzer:
+def _download_model(url: str) -> OnnxAnalyzer:
     """Blocking helper -- runs in a thread executor."""
-    model_url = os.environ.get("MODEL_BLOB_URL")
-    if not model_url:
-        raise RuntimeError("MODEL_BLOB_URL environment variable is not set")
+    if not url:
+        raise RuntimeError("URL of the model missing")
 
     tmp_path = "/tmp/clutter_model.onnx"
     if not os.path.exists(tmp_path):
-        _download_in_chunks(model_url, tmp_path)
+        _download_in_chunks(url, tmp_path)
 
     analyzer = OnnxAnalyzer(tmp_path)
     return analyzer
 
 
-async def _get_onnx_analyzer() -> OnnxAnalyzer:
+async def _get_onnx_analyzer(model_url: str) -> OnnxAnalyzer:
     """Async function so it doesn't block the event loop while downloading or
     loading the model."""
     global _onnx_analyzer
@@ -63,7 +62,7 @@ async def _get_onnx_analyzer() -> OnnxAnalyzer:
         if _onnx_analyzer is not None:
             return _onnx_analyzer
         loop = asyncio.get_event_loop()
-        _onnx_analyzer = await loop.run_in_executor(None, _download_model)
+        _onnx_analyzer = await loop.run_in_executor(None, _download_model, model_url)
     return _onnx_analyzer
 
 
@@ -75,11 +74,11 @@ async def analyze(image: UploadFile = File(...)):
     except (IOError, OSError, ValueError):
         raise HTTPException(status_code=400, detail="Invalid image file")
 
-    if os.environ.get("USE_MOCK_MODEL") == "true":
+    model_url = os.environ.get("MODEL_URL")
+    if not model_url:
         return MockAnalyzer().analyze(img)
-
     try:
-        analyzer = await _get_onnx_analyzer()
+        analyzer = await _get_onnx_analyzer(model_url)
         return analyzer.analyze(img)
     except (ValueError, RuntimeError) as exc:
         raise HTTPException(status_code=500, detail=str(exc))
