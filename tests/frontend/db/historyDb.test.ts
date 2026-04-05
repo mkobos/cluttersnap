@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import 'fake-indexeddb/auto';
-import { historyDb } from '../../src/db/historyDb';
-import type { HistoryEntry } from '../../src/types';
+import { historyDb } from '../../../frontend/db/historyDb';
+import type { HistoryEntry } from '../../../frontend/types';
 
 function makeEntry(overrides?: Partial<HistoryEntry>): Omit<HistoryEntry, 'id'> {
   return {

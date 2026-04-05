@@ -93,7 +93,7 @@ The ONNX model (`clutter_model.onnx`) is stored in Vercel Blob and downloaded by
 │   ├── icons/                # PWA icons (192px, 512px)
 │   ├── manifest.webmanifest
 │   └── favicon.ico
-├── src/
+├── frontend/
 │   ├── main.tsx
 │   ├── App.tsx
 │   ├── ml/
@@ -117,15 +117,16 @@ The ONNX model (`clutter_model.onnx`) is stored in Vercel Blob and downloaded by
 │   └── types/
 │       └── index.ts
 ├── tests/
-│   ├── python/
+│   ├── api/
 │   │   ├── test_preprocessor.py
 │   │   ├── test_eigen_cam.py
 │   │   └── test_index.py
-│   ├── ml/
-│   │   └── ApiClutterAnalyzer.test.ts
-│   ├── components/
-│   ├── context/
-│   └── db/
+│   └── frontend/
+│       ├── ml/
+│       │   └── ApiClutterAnalyzer.test.ts
+│       ├── components/
+│       ├── context/
+│       └── db/
 ├── vite.config.ts
 ├── tailwind.config.ts
 └── package.json
@@ -177,7 +178,7 @@ FastAPI entry point. On cold start, downloads the ONNX model from `MODEL_BLOB_UR
 
 ## Frontend — ClutterAnalyzer Interface
 
-`ClutterAnalyzer` (`src/types/index.ts`) exposes two methods:
+`ClutterAnalyzer` (`frontend/types/index.ts`) exposes two methods:
 - `load(): Promise<void>` — no-op for the API client (nothing to load on the browser side)
 - `analyze(imageData: ImageData): Promise<AnalysisResult>`
 

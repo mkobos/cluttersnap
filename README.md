@@ -17,7 +17,7 @@ python3 -m venv .venv
 USE_MOCK_MODEL=true uvicorn api.index:app --reload
 
 # Run Python tests
-.venv/bin/pytest tests/python/
+.venv/bin/pytest tests/api/
 ```
 
 ### React UI

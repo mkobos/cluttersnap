@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { appReducer, initialState } from '../../src/context/AppContext';
-import type { AppState, AnalysisResult } from '../../src/types';
+import { appReducer, initialState } from '../../../frontend/context/AppContext';
+import type { AppState, AnalysisResult } from '../../../frontend/types';
 
 const mockResult: AnalysisResult = {
   score: 7.3,

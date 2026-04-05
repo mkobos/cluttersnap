@@ -5,7 +5,7 @@
 A Progressive Web App (PWA) that analyzes room photos to produce a clutter score (1–10) and a heatmap overlay. The app is split into two layers:
 
 1. **Python API** (`api/`) — ML inference runs server-side via ONNX Runtime. Takes an image, returns a clutter score and a full-resolution heatmap.
-2. **React UI** (`src/`) — Captures photos, calls the API, and renders results. No ML code in the frontend.
+2. **React UI** (`frontend/`) — Captures photos, calls the API, and renders results. No ML code in the frontend.
 
 - Product specification: `USER_SPEC.md`
 - Technical specification: `TECH_SPEC.md`

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, act, cleanup } from '@testing-library/react';
-import { ScoreDisplay } from '../../src/components/ScoreDisplay';
+import { ScoreDisplay } from '../../../frontend/components/ScoreDisplay';
 
 describe('ScoreDisplay', () => {
   beforeEach(() => {

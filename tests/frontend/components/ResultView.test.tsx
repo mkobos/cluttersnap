@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act, cleanup } from '@testing-library/react';
-import { ResultView } from '../../src/components/ResultView';
-import type { AnalysisResult } from '../../src/types';
+import { ResultView } from '../../../frontend/components/ResultView';
+import type { AnalysisResult } from '../../../frontend/types';
 
 const MOCK_RESULT: AnalysisResult = {
   score: 7.5,

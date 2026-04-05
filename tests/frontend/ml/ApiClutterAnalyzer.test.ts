@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ApiClutterAnalyzer } from '../../src/ml/ApiClutterAnalyzer';
+import { ApiClutterAnalyzer } from '../../../frontend/ml/ApiClutterAnalyzer';
 
 const ENDPOINT = '/api/analyze';
 
