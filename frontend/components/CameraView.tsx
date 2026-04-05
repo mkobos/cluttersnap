@@ -18,12 +18,21 @@ export function CameraView({
   saveError,
   updateAvailable,
 }: CameraViewProps) {
-  const { dispatch } = useAppContext();
+  const { state, dispatch } = useAppContext();
   const { videoRef, capture, streamError } = useCamera();
   const [isCapturing, setIsCapturing] = useState(false);
   const isCapturingRef = useRef(false);
   const [toast, setToast] = useState<string | null>(null);
   const [idbNoticeShown, setIdbNoticeShown] = useState(false);
+
+  // Show analysis errors as toast
+  useEffect(() => {
+    if (state.error) {
+      setToast(state.error);
+      const t = setTimeout(() => setToast(null), 4000);
+      return () => clearTimeout(t);
+    }
+  }, [state.error]);
 
   // Show IDB unavailable notice once
   useEffect(() => {
