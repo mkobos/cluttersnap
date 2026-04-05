@@ -13,11 +13,6 @@ def make_jpeg_bytes(width: int = 100, height: int = 80) -> bytes:
     return buf.getvalue()
 
 
-@pytest.fixture(autouse=True)
-def use_mock_model(monkeypatch):
-    monkeypatch.setenv("USE_MOCK_MODEL", "true")
-
-
 @pytest.fixture
 def client():
     from api.index import app

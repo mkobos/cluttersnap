@@ -19,7 +19,7 @@ A Progressive Web App (PWA) that analyzes room photos to produce a clutter score
 
 Train a PyTorch model and export it as `clutter_model.onnx`. See `TECH_SPEC.md` → Model Contract for the required input/output tensor specification.
 
-**After export, upload to Vercel Blob and set `MODEL_BLOB_URL`** — the Python API downloads the model on cold start and caches it in `/tmp`.
+**After export, upload to Vercel Blob and set `MODEL_URL`** — the Python API downloads the model on cold start and caches it in `/tmp`.
 
 ### 2. Web Application
 
@@ -28,7 +28,7 @@ FastAPI app in `api/`. Run locally with:
 ```bash
 uvicorn api.index:app --reload
 ```
-Set `USE_MOCK_MODEL=true` to skip ONNX inference and return synthetic data.
+Leave `MODEL_URL` unset to skip ONNX inference and return synthetic data.
 
 #### React UI
 React 18 + TypeScript PWA built with Vite. The UI expects the API at `/api/analyze`. Run locally with:
