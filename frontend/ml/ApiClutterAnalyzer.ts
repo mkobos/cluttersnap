@@ -22,14 +22,17 @@ export class ApiClutterAnalyzer implements ClutterAnalyzer {
     }
 
     const data = (await response.json()) as { score: number; heatmap: number[][] };
+    if (
+      typeof data.score !== 'number' ||
+      !Array.isArray(data.heatmap) ||
+      data.heatmap.length === 0 ||
+      !Array.isArray(data.heatmap[0])
+    ) {
+      throw new Error('Invalid API response shape');
+    }
     const height = data.heatmap.length;
     const width = data.heatmap[0].length;
-    const flat = new Float32Array(height * width);
-    for (let row = 0; row < height; row++) {
-      for (let col = 0; col < width; col++) {
-        flat[row * width + col] = data.heatmap[row][col];
-      }
-    }
+    const flat = new Float32Array(data.heatmap.flat());
 
     return { score: data.score, heatmap: flat, heatmapWidth: width, heatmapHeight: height };
   }
@@ -37,7 +40,8 @@ export class ApiClutterAnalyzer implements ClutterAnalyzer {
 
 async function imageDataToBlob(imageData: ImageData): Promise<Blob> {
   const canvas = new OffscreenCanvas(imageData.width, imageData.height);
-  const ctx = canvas.getContext('2d')!;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Canvas 2d context unavailable');
   ctx.putImageData(imageData, 0, 0);
   return canvas.convertToBlob({ type: 'image/jpeg', quality: 0.92 });
 }

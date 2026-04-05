@@ -14,7 +14,7 @@ interface ResultViewProps {
 export function ResultView({ imageUrl, result, resultSource, onRetake, onBack }: ResultViewProps) {
   const [opacity, setOpacity] = useState(0.5);
   const [displaySize, setDisplaySize] = useState({ width: 0, height: 0 });
-  const containerRef = useRef<HTMLDivElement>(null!);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setDisplaySize({ width: 0, height: 0 });

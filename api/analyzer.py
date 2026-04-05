@@ -1,13 +1,8 @@
-import os
-import sys
-
 import numpy as np
 import onnxruntime as ort
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-from preprocessor import preprocess_image  # noqa: E402
-from eigen_cam import compute_eigen_cam    # noqa: E402
+from .preprocessor import preprocess_image
+from .eigen_cam import compute_eigen_cam
 
 
 class OnnxAnalyzer:
@@ -35,8 +30,8 @@ class OnnxAnalyzer:
         outputs = self._session.run(["score", "feature_map"], {"input": input_tensor})
 
         score = float(outputs[0].flat[0])
-        if not (1.0 <= score <= 10.0):
-            raise ValueError(f"Score out of range: {score}")
+        if not np.isfinite(score) or not (1.0 <= score <= 10.0):
+            raise ValueError(f"Score out of range or invalid: {score}")
 
         feature_map = outputs[1]  # (1, C, H_feat, W_feat)
         heatmap = compute_eigen_cam(feature_map, target_h=h, target_w=w)

@@ -46,5 +46,5 @@ def test_hot_spot_at_center_is_maximum():
 
 def test_upsamples_to_larger_target():
     fm = make_feature_map(4, 7, 7, fill=1.0)
-    result = compute_eigen_map = compute_eigen_cam(fm, target_h=480, target_w=640)
+    result = compute_eigen_cam(fm, target_h=480, target_w=640)
     assert result.shape == (480, 640)

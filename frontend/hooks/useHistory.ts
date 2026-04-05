@@ -77,7 +77,8 @@ function generateThumbnail(imageDataUrl: string): Promise<string> {
       const canvas = document.createElement('canvas');
       canvas.width = targetWidth;
       canvas.height = targetHeight;
-      const ctx = canvas.getContext('2d')!;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { reject(new Error('Canvas 2d context unavailable')); return; }
       ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
       resolve(canvas.toDataURL('image/jpeg', 0.7));
     };

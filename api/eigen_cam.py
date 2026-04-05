@@ -25,7 +25,7 @@ def compute_eigen_cam(
         mv = M @ v           # (C,)
         mtmv = M.T @ mv      # (H*W,)
         norm = np.linalg.norm(mtmv)
-        if norm == 0:
+        if norm < 1e-12:
             return np.zeros((target_h, target_w), dtype=np.float32)
         v = mtmv / norm
 
@@ -41,5 +41,5 @@ def compute_eigen_cam(
 
     # Upsample to target size using PIL (mode 'F' preserves float precision)
     pil_heat = Image.fromarray(v, mode='F')
-    pil_heat = pil_heat.resize((target_w, target_h), Image.BILINEAR)
+    pil_heat = pil_heat.resize((target_w, target_h), Image.Resampling.BILINEAR)
     return np.array(pil_heat, dtype=np.float32)

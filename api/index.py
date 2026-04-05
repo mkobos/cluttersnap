@@ -1,16 +1,13 @@
+import asyncio
 import io
 import os
-import sys
 
 import numpy as np
 from PIL import Image
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
-# Allow sibling imports when running as a Vercel Python function
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-from mock_analyzer import generate_mock_result  # noqa: E402
+from .mock_analyzer import generate_mock_result
 
 app = FastAPI()
 
@@ -23,25 +20,38 @@ app.add_middleware(
 
 # Module-level singleton so the ONNX session is reused across warm invocations
 _onnx_analyzer = None
+_onnx_lock = asyncio.Lock()
 
 
-def _get_onnx_analyzer():
+def _download_and_load_model():
+    """Blocking helper -- runs in a thread executor."""
+    import urllib.request
+    from .analyzer import OnnxAnalyzer
+
+    model_url = os.environ.get("MODEL_BLOB_URL")
+    if not model_url:
+        raise RuntimeError("MODEL_BLOB_URL environment variable is not set")
+
+    tmp_path = "/tmp/clutter_model.onnx"
+    if not os.path.exists(tmp_path):
+        with urllib.request.urlopen(model_url, timeout=30) as resp, open(tmp_path, "wb") as f:
+            while chunk := resp.read(1 << 20):
+                f.write(chunk)
+
+    analyzer = OnnxAnalyzer(tmp_path)
+    analyzer.load()
+    return analyzer
+
+
+async def _get_onnx_analyzer():
     global _onnx_analyzer
-    if _onnx_analyzer is None:
-        import urllib.request
-        from analyzer import OnnxAnalyzer
-
-        model_url = os.environ.get("MODEL_BLOB_URL")
-        if not model_url:
-            raise RuntimeError("MODEL_BLOB_URL environment variable is not set")
-
-        tmp_path = "/tmp/clutter_model.onnx"
-        if not os.path.exists(tmp_path):
-            urllib.request.urlretrieve(model_url, tmp_path)
-
-        _onnx_analyzer = OnnxAnalyzer(tmp_path)
-        _onnx_analyzer.load()
-
+    if _onnx_analyzer is not None:
+        return _onnx_analyzer
+    async with _onnx_lock:
+        if _onnx_analyzer is not None:
+            return _onnx_analyzer
+        loop = asyncio.get_event_loop()
+        _onnx_analyzer = await loop.run_in_executor(None, _download_and_load_model)
     return _onnx_analyzer
 
 
@@ -50,7 +60,7 @@ async def analyze(image: UploadFile = File(...)):
     data = await image.read()
     try:
         pil_img = Image.open(io.BytesIO(data)).convert("RGB")
-    except Exception:
+    except (IOError, OSError, ValueError):
         raise HTTPException(status_code=400, detail="Invalid image file")
 
     img = np.array(pil_img, dtype=np.uint8)
@@ -60,8 +70,11 @@ async def analyze(image: UploadFile = File(...)):
         return generate_mock_result(width=w, height=h)
 
     try:
-        analyzer = _get_onnx_analyzer()
+        analyzer = await _get_onnx_analyzer()
     except RuntimeError as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
-    return analyzer.analyze(img)
+    try:
+        return analyzer.analyze(img)
+    except (ValueError, RuntimeError) as exc:
+        raise HTTPException(status_code=500, detail=str(exc))

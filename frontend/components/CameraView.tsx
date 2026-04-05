@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCamera } from '../hooks/useCamera';
 import { useAppContext } from '../context/AppContext';
 import type { ClutterAnalyzer, AnalysisResult } from '../types';
@@ -21,6 +21,7 @@ export function CameraView({
   const { dispatch } = useAppContext();
   const { videoRef, capture, streamError } = useCamera();
   const [isCapturing, setIsCapturing] = useState(false);
+  const isCapturingRef = useRef(false);
   const [toast, setToast] = useState<string | null>(null);
   const [idbNoticeShown, setIdbNoticeShown] = useState(false);
 
@@ -50,7 +51,8 @@ export function CameraView({
   }, [streamError]);
 
   const handleCapture = useCallback(async () => {
-    if (isCapturing) return;
+    if (isCapturingRef.current) return;
+    isCapturingRef.current = true;
     setIsCapturing(true);
     try {
       const { imageData, dataUrl } = capture();
@@ -65,9 +67,10 @@ export function CameraView({
     } catch (err) {
       dispatch({ type: 'ERROR', message: err instanceof Error ? err.message : 'Analysis failed' });
     } finally {
+      isCapturingRef.current = false;
       setIsCapturing(false);
     }
-  }, [isCapturing, analyzer, capture, dispatch, historyAvailable, onHistorySave]);
+  }, [analyzer, capture, dispatch, historyAvailable, onHistorySave]);
 
   return (
     <div className="relative h-screen bg-black">

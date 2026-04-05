@@ -37,6 +37,17 @@ function heatmapValueToRgb(value: number): [number, number, number] {
   return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
 }
 
+/** Pre-computed 256-entry colour LUT to avoid per-pixel function calls. */
+const HEATMAP_LUT = new Uint8Array(256 * 3);
+(() => {
+  for (let i = 0; i < 256; i++) {
+    const [r, g, b] = heatmapValueToRgb(i / 255);
+    HEATMAP_LUT[i * 3] = r;
+    HEATMAP_LUT[i * 3 + 1] = g;
+    HEATMAP_LUT[i * 3 + 2] = b;
+  }
+})();
+
 export function HeatmapOverlay({
   heatmap,
   heatmapWidth,
@@ -45,7 +56,7 @@ export function HeatmapOverlay({
   displayHeight,
   opacity,
 }: HeatmapOverlayProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null!);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -59,14 +70,15 @@ export function HeatmapOverlay({
     // Draw heatmap at native resolution onto an offscreen canvas,
     // then scale it to display size in a single GPU-accelerated drawImage call.
     const offscreen = new OffscreenCanvas(heatmapWidth, heatmapHeight);
-    const offCtx = offscreen.getContext('2d')!;
+    const offCtx = offscreen.getContext('2d');
+    if (!offCtx) return;
     const imageData = offCtx.createImageData(heatmapWidth, heatmapHeight);
 
     for (let i = 0; i < heatmap.length; i++) {
-      const [r, g, b] = heatmapValueToRgb(heatmap[i]);
-      imageData.data[i * 4]     = r;
-      imageData.data[i * 4 + 1] = g;
-      imageData.data[i * 4 + 2] = b;
+      const idx = Math.round(Math.max(0, Math.min(1, heatmap[i])) * 255) * 3;
+      imageData.data[i * 4]     = HEATMAP_LUT[idx];
+      imageData.data[i * 4 + 1] = HEATMAP_LUT[idx + 1];
+      imageData.data[i * 4 + 2] = HEATMAP_LUT[idx + 2];
       imageData.data[i * 4 + 3] = 255;
     }
 
