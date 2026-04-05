@@ -23,7 +23,7 @@ class MockAnalyzer:
             sigma = rng.uniform(max(w, h) * 0.05, max(w, h) * 0.2)
 
             dist_sq = (xx - cx) ** 2 + (yy - cy) ** 2
-            heatmap += float(intensity) * np.exp(-dist_sq / (2 * sigma ** 2))
+            heatmap += float(intensity) * np.exp(-dist_sq / (2 * sigma**2))
 
         max_val = heatmap.max()
         if max_val > 0:

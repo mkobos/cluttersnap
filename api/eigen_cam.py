@@ -13,8 +13,8 @@ def _dominant_right_singular_vector(M: np.ndarray, spatial_size: int) -> np.ndar
     """
     v = np.ones(spatial_size, dtype=np.float32)
     for _ in range(POWER_ITERATIONS):
-        mv = M @ v           # (C,)
-        mtmv = M.T @ mv      # (H*W,)
+        mv = M @ v  # (C,)
+        mtmv = M.T @ mv  # (H*W,)
         norm = np.linalg.norm(mtmv)
         if norm < 1e-12:
             return np.zeros(spatial_size, dtype=np.float32)
@@ -48,8 +48,9 @@ def compute_eigen_cam(
     v = v.reshape(H, W)
     return v
 
+
 def upsample(img: np.ndarray, target_h: int, target_w: int) -> np.ndarray:
     # Upsample to target size using PIL (mode 'F' preserves float precision)
-    pil_heat = Image.fromarray(img, mode='F')
+    pil_heat = Image.fromarray(img, mode="F")
     pil_heat = pil_heat.resize((target_w, target_h), Image.Resampling.BILINEAR)
     return np.array(pil_heat, dtype=np.float32)

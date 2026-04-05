@@ -21,6 +21,7 @@ def use_mock_model(monkeypatch):
 @pytest.fixture
 def client():
     from api.index import app
+
     return TestClient(app)
 
 
@@ -50,8 +51,8 @@ def test_heatmap_matches_input_dimensions(client):
     )
     data = response.json()
     assert "heatmap" in data
-    assert len(data["heatmap"]) == 120       # height
-    assert len(data["heatmap"][0]) == 160    # width
+    assert len(data["heatmap"]) == 120  # height
+    assert len(data["heatmap"][0]) == 160  # width
 
 
 def test_heatmap_values_in_0_1(client):

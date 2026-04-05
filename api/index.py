@@ -33,7 +33,7 @@ def _download_in_chunks(url: str, dest_path: str) -> None:
     """
     import urllib.request
 
-    chunk_size: int = 1024 * 1024 # 1024 * 1024 = 1 MiB
+    chunk_size: int = 1024 * 1024  # 1024 * 1024 = 1 MiB
     with urllib.request.urlopen(url, timeout=30) as resp, open(dest_path, "wb") as f:
         while chunk := resp.read(chunk_size):
             f.write(chunk)
@@ -54,7 +54,7 @@ def _download_model() -> OnnxAnalyzer:
 
 
 async def _get_onnx_analyzer() -> OnnxAnalyzer:
-    """Async function so it doesn't block the event loop while downloading or 
+    """Async function so it doesn't block the event loop while downloading or
     loading the model."""
     global _onnx_analyzer
     if _onnx_analyzer is not None:

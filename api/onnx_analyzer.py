@@ -20,7 +20,7 @@ class OnnxAnalyzer:
         img: PIL RGB image (any size)
         Returns: AnalysisResult with score and heatmap fields
         """
-        
+
         w, h = img.size
         input_tensor = preprocess_image(img)
 

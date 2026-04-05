@@ -15,6 +15,6 @@ def preprocess_image(img: Image.Image) -> np.ndarray:
         (MODEL_INPUT_SIZE, MODEL_INPUT_SIZE), Image.Resampling.BILINEAR
     )
     arr = np.array(pil_img, dtype=np.float32) / 255.0  # HxWx3 in [0, 1]
-    arr = (arr - IMAGENET_MEAN) / IMAGENET_STD         # normalize
-    arr = arr.transpose(2, 0, 1)                       # CHW
-    return arr[np.newaxis]                             # NCHW
+    arr = (arr - IMAGENET_MEAN) / IMAGENET_STD  # normalize
+    arr = arr.transpose(2, 0, 1)  # CHW
+    return arr[np.newaxis]  # NCHW
