@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { AppProvider, useAppContext } from './context/AppContext';
-import { createAnalyzer } from './ml/analyzerFactory';
+import { ApiClutterAnalyzer } from './ml/ApiClutterAnalyzer';
 import { useCameraPermission } from './hooks/useCameraPermission';
 import { useHistory } from './hooks/useHistory';
 import { LoadingScreen } from './components/LoadingScreen';
@@ -12,7 +12,7 @@ import type { ClutterAnalyzer } from './types';
 
 function AppInner() {
   const { state, dispatch } = useAppContext();
-  const analyzerRef = useRef<ClutterAnalyzer>(createAnalyzer());
+  const analyzerRef = useRef<ClutterAnalyzer>(new ApiClutterAnalyzer('/api/analyze'));
   const { isIos, permissionState, requestPermission } = useCameraPermission();
   const history = useHistory();
 

@@ -7,10 +7,6 @@ export class ApiClutterAnalyzer implements ClutterAnalyzer {
     this.endpoint = endpoint;
   }
 
-  async load(): Promise<void> {
-    // No model to load — the API is always ready.
-  }
-
   async analyze(imageData: ImageData): Promise<AnalysisResult> {
     const blob = await imageDataToBlob(imageData);
     const body = new FormData();

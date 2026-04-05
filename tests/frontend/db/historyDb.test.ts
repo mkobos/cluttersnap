@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import 'fake-indexeddb/auto';
-import { historyDb } from '../../../frontend/db/historyDb';
+import { historyDb, _resetDbForTests } from '../../../frontend/db/historyDb';
 import type { HistoryEntry } from '../../../frontend/types';
 
 function makeEntry(overrides?: Partial<HistoryEntry>): Omit<HistoryEntry, 'id'> {
@@ -18,8 +18,9 @@ function makeEntry(overrides?: Partial<HistoryEntry>): Omit<HistoryEntry, 'id'> 
 
 describe('historyDb', () => {
   beforeEach(() => {
-    // Reset the IndexedDB between tests
+    // Reset the IndexedDB between tests and drop the cached connection
     indexedDB = new IDBFactory();
+    _resetDbForTests();
   });
 
   it('isAvailable returns true when IndexedDB works', async () => {

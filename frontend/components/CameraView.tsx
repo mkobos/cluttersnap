@@ -25,39 +25,17 @@ export function CameraView({
   const [toast, setToast] = useState<string | null>(null);
   const [idbNoticeShown, setIdbNoticeShown] = useState(false);
 
-  // Show analysis errors as toast
   useEffect(() => {
-    if (state.error) {
-      setToast(state.error);
+    const message = streamError ?? state.error ?? saveError
+      ?? (!historyAvailable && !idbNoticeShown ? 'History feature is disabled in this browser mode.' : null);
+    if (!message) return;
+    if (!historyAvailable && !idbNoticeShown) setIdbNoticeShown(true);
+    setToast(message);
+    if (!streamError) {
       const t = setTimeout(() => setToast(null), 4000);
       return () => clearTimeout(t);
     }
-  }, [state.error]);
-
-  // Show IDB unavailable notice once
-  useEffect(() => {
-    if (!historyAvailable && !idbNoticeShown) {
-      setToast('History feature is disabled in this browser mode.');
-      setIdbNoticeShown(true);
-      const t = setTimeout(() => setToast(null), 4000);
-      return () => clearTimeout(t);
-    }
-  }, [historyAvailable, idbNoticeShown]);
-
-  // Show save error as toast
-  useEffect(() => {
-    if (saveError) {
-      setToast(saveError);
-      const t = setTimeout(() => setToast(null), 4000);
-      return () => clearTimeout(t);
-    }
-  }, [saveError]);
-
-  useEffect(() => {
-    if (streamError) {
-      setToast(streamError);
-    }
-  }, [streamError]);
+  }, [state.error, saveError, streamError, historyAvailable, idbNoticeShown]);
 
   const handleCapture = useCallback(async () => {
     if (isCapturingRef.current) return;

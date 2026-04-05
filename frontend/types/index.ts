@@ -6,7 +6,6 @@ export interface AnalysisResult {
 }
 
 export interface ClutterAnalyzer {
-  load(): Promise<void>;
   analyze(imageData: ImageData): Promise<AnalysisResult>;
 }
 

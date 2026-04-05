@@ -9,9 +9,8 @@ from .result import Result
 
 class OnnxAnalyzer:
     def __init__(self, model_path: str) -> None:
-        self._model_path = model_path
         self._session = ort.InferenceSession(
-            self._model_path,
+            model_path,
             providers=["CPUExecutionProvider"],
         )
 

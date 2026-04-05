@@ -29,13 +29,6 @@ beforeEach(() => {
 });
 
 describe('ApiClutterAnalyzer', () => {
-  describe('load()', () => {
-    it('resolves immediately without error', async () => {
-      const analyzer = new ApiClutterAnalyzer(ENDPOINT);
-      await expect(analyzer.load()).resolves.toBeUndefined();
-    });
-  });
-
   describe('analyze()', () => {
     it('returns score and heatmap matching image dimensions', async () => {
       const heatmap = [[0.1, 0.2], [0.3, 0.4]];
@@ -86,3 +79,4 @@ describe('ApiClutterAnalyzer', () => {
     });
   });
 });
+

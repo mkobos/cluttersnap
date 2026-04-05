@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import type { HistoryEntry, AnalysisResult } from '../types';
+import { getScoreBand } from '../utils/scoreBand';
 
 interface HistoryListProps {
   entries: HistoryEntry[];
@@ -26,12 +27,6 @@ function formatTimestamp(ts: number): string {
   return `${day} ${month} ${time}`;
 }
 
-function getScoreBandColor(score: number): string {
-  const rounded = Math.round(score);
-  if (rounded <= 3) return 'bg-green-500';
-  if (rounded <= 6) return 'bg-amber-500';
-  return 'bg-red-500';
-}
 
 interface SwipeableItemProps {
   entry: HistoryEntry;
@@ -86,7 +81,7 @@ function SwipeableItem({ entry, onSelect, onDelete }: SwipeableItemProps) {
         <div className="flex-1">
           <span className="text-sm text-slate-400">{formatTimestamp(entry.timestamp)}</span>
         </div>
-        <span className={`px-2 py-1 rounded text-sm font-bold text-white ${getScoreBandColor(entry.score)}`}>
+        <span className={`px-2 py-1 rounded text-sm font-bold text-white ${getScoreBand(entry.score).bgColor}`}>
           {Math.round(entry.score)}
         </span>
       </div>
