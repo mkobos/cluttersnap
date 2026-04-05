@@ -2,7 +2,10 @@
 
 ## Project Overview
 
-A Progressive Web App (PWA) that analyzes room photos to produce a clutter score (1–10) and a heatmap overlay. All ML inference runs fully in-browser via ONNX Runtime Web. No backend server.
+A Progressive Web App (PWA) that analyzes room photos to produce a clutter score (1–10) and a heatmap overlay. The app is split into two layers:
+
+1. **Python API** (`api/`) — ML inference runs server-side via ONNX Runtime. Takes an image, returns a clutter score and a full-resolution heatmap.
+2. **React UI** (`src/`) — Captures photos, calls the API, and renders results. No ML code in the frontend.
 
 - Product specification: `USER_SPEC.md`
 - Technical specification: `TECH_SPEC.md`
@@ -16,11 +19,20 @@ A Progressive Web App (PWA) that analyzes room photos to produce a clutter score
 
 Train a PyTorch model and export it as `clutter_model.onnx`. See `TECH_SPEC.md` → Model Contract for the required input/output tensor specification.
 
-**Model file placement after export:**
-```
-public/models/clutter_model.onnx
-```
+**After export, upload to Vercel Blob and set `MODEL_BLOB_URL`** — the Python API downloads the model on cold start and caches it in `/tmp`.
 
 ### 2. Web Application
 
-React 18 + TypeScript PWA built with Vite. Build and test the full UI with the mock model (`VITE_USE_MOCK_MODEL=true`) before the real model is ready.
+#### Python API
+FastAPI app in `api/`. Run locally with:
+```bash
+uvicorn api.index:app --reload
+```
+Set `USE_MOCK_MODEL=true` to skip ONNX inference and return synthetic data.
+
+#### React UI
+React 18 + TypeScript PWA built with Vite. The UI expects the API at `/api/analyze`. Run locally with:
+```bash
+npm run dev
+```
+The mock is now server-side; no frontend env var is needed during UI development.

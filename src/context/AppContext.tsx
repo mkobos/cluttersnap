@@ -6,16 +6,12 @@ export const initialState: AppState = {
   capturedImageUrl: null,
   analysisResult: null,
   error: null,
-  isModelLoading: true,
   resultSource: null,
   updateAvailable: false,
 };
 
 export function appReducer(state: AppState, action: Action): AppState {
   switch (action.type) {
-    case 'MODEL_LOADED':
-      return { ...state, isModelLoading: false };
-
     case 'CAPTURE':
       return {
         ...state,

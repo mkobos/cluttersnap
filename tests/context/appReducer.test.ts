@@ -10,20 +10,12 @@ const mockResult: AnalysisResult = {
 };
 
 describe('appReducer', () => {
-  it('initialState has screen=camera and isModelLoading=true', () => {
+  it('initialState has screen=camera', () => {
     expect(initialState.screen).toBe('camera');
-    expect(initialState.isModelLoading).toBe(true);
-  });
-
-  it('MODEL_LOADED sets isModelLoading to false', () => {
-    const state = appReducer(initialState, { type: 'MODEL_LOADED' });
-    expect(state.screen).toBe('camera');
-    expect(state.isModelLoading).toBe(false);
   });
 
   it('CAPTURE transitions to analyzing screen', () => {
-    const prev: AppState = { ...initialState, screen: 'camera', isModelLoading: false };
-    const state = appReducer(prev, { type: 'CAPTURE', imageUrl: 'data:image/jpeg;base64,abc' });
+    const state = appReducer(initialState, { type: 'CAPTURE', imageUrl: 'data:image/jpeg;base64,abc' });
     expect(state.screen).toBe('analyzing');
     expect(state.capturedImageUrl).toBe('data:image/jpeg;base64,abc');
     expect(state.resultSource).toBe('capture');
@@ -59,8 +51,7 @@ describe('appReducer', () => {
   });
 
   it('SHOW_HISTORY transitions to history screen', () => {
-    const prev: AppState = { ...initialState, screen: 'camera', isModelLoading: false };
-    const state = appReducer(prev, { type: 'SHOW_HISTORY' });
+    const state = appReducer(initialState, { type: 'SHOW_HISTORY' });
     expect(state.screen).toBe('history');
   });
 

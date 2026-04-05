@@ -16,3 +16,6 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+#Python
+__pycache__/

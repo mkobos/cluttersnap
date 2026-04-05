@@ -17,13 +17,11 @@ export interface AppState {
   capturedImageUrl: string | null;
   analysisResult: AnalysisResult | null;
   error: string | null;
-  isModelLoading: boolean;
   resultSource: 'capture' | 'history' | null;
   updateAvailable: boolean;
 }
 
 export type Action =
-  | { type: 'MODEL_LOADED' }
   | { type: 'CAPTURE'; imageUrl: string }
   | { type: 'ANALYSIS_COMPLETE'; result: AnalysisResult }
   | { type: 'ERROR'; message: string }

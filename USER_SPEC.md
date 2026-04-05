@@ -6,7 +6,7 @@ A Progressive Web App (PWA) that allows the user to take a photo of a room and r
 - A **clutter score** from 1 to 10 (1 = perfectly tidy, 10 = extremely cluttered)
 - A **heatmap overlay** on the photo highlighting the most cluttered zones
 
-All inference runs **fully in the browser**. There is no backend server. The app works offline after the first load. It is accessible on any modern mobile or desktop browser via a URL, and can be installed to the home screen as a PWA.
+Photos are sent to a backend API for analysis. The app is accessible on any modern mobile or desktop browser via a URL, and can be installed to the home screen as a PWA. History browsing works offline; capture and analysis require network connectivity.
 
 ---
 
@@ -21,15 +21,15 @@ All inference runs **fully in the browser**. There is no backend server. The app
 
 ### Loading Screen
 
-Shown on first visit while the ML model is initializing. Camera permission is requested at this point, in parallel with model loading.
+Shown on first visit while camera permission has not yet been granted.
 
-- Full-screen loading spinner with an explanatory message (e.g. "Loading model…")
-- The camera does not start until the model is fully loaded and camera permission is granted
-- If the model file fails to load, replace the spinner with a full-screen error message and a retry button
+- Full-screen loading spinner
+- On iOS, a visible "Enable Camera" button is shown to trigger the permission prompt (iOS requires a user gesture)
+- Once permission is granted the app transitions immediately to the Camera screen
 
 ### Camera Screen
 
-Shown after the model has loaded and when the user returns from a result or history screen.
+Shown after camera permission is granted and when the user returns from a result or history screen.
 
 - Full-screen live camera feed using the rear-facing camera (falls back silently to any available camera if no rear camera is present)
 - Circular capture button centered at the bottom
@@ -89,8 +89,7 @@ A full-screen overlay sliding down from the top, accessible via the History icon
 |---|---|
 | Camera permission denied | Clear message explaining why camera is needed, with plain-text instructions for how to enable it in browser settings |
 | `getUserMedia` not supported | Message that the browser is not supported; suggest Chrome or Safari |
-| Model file fails to load | Full-screen error with a retry button |
-| ONNX inference fails | Toast error message; return to Camera screen |
+| API request fails (network error, server error) | Toast error message; return to Camera screen |
 | Page not served over HTTPS | Camera API unavailable — ensure HTTPS in all environments |
 | IndexedDB unavailable (e.g. private browsing) | History feature disabled; a brief notice is shown once on the Camera screen |
 
@@ -98,8 +97,7 @@ A full-screen overlay sliding down from the top, accessible via the History icon
 
 ## PWA & Offline Behaviour
 
-- After the first load, the app works fully offline including inference
-- The ML model is cached by the Service Worker on first load
-- All history data (photos, heatmap data, scores) is stored in IndexedDB and available offline
+- Capture and analysis require network connectivity (the API processes images server-side)
+- History browsing is fully offline — all history data (photos, heatmap data, scores) is stored in IndexedDB
 - On iOS, the user must use Safari and "Add to Home Screen" for PWA installation
 - On Android Chrome, the browser shows an automatic "Add to Home Screen" banner

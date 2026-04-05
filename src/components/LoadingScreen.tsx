@@ -1,32 +1,14 @@
 interface LoadingScreenProps {
-  error: string | null;
   permissionState: 'prompt' | 'granted' | 'denied' | 'unsupported';
   isIos: boolean;
-  onRetry: () => void;
   onRequestPermission: () => void;
 }
 
 export function LoadingScreen({
-  error,
   permissionState,
   isIos,
-  onRetry,
   onRequestPermission,
 }: LoadingScreenProps) {
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen gap-4 p-6 text-center">
-        <p className="text-xl text-red-400">{error}</p>
-        <button
-          onClick={onRetry}
-          className="px-6 py-3 bg-blue-600 rounded-lg text-white font-semibold"
-        >
-          Retry
-        </button>
-      </div>
-    );
-  }
-
   if (permissionState === 'denied') {
     return (
       <div className="flex flex-col items-center justify-center h-screen gap-4 p-6 text-center">
@@ -52,7 +34,6 @@ export function LoadingScreen({
   return (
     <div className="flex flex-col items-center justify-center h-screen gap-6">
       <div className="w-12 h-12 border-4 border-slate-600 border-t-blue-400 rounded-full animate-spin" />
-      <p className="text-lg text-slate-300">Loading model...</p>
       {isIos && permissionState === 'prompt' && (
         <button
           onClick={onRequestPermission}

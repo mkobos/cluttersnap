@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import { AppProvider, useAppContext } from './context/AppContext';
 import { createAnalyzer } from './ml/analyzerFactory';
 import { useCameraPermission } from './hooks/useCameraPermission';
@@ -12,26 +12,9 @@ import type { ClutterAnalyzer } from './types';
 
 function AppInner() {
   const { state, dispatch } = useAppContext();
-  const analyzerRef = useRef<ClutterAnalyzer | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const analyzerRef = useRef<ClutterAnalyzer>(createAnalyzer());
   const { isIos, permissionState, requestPermission } = useCameraPermission();
   const history = useHistory();
-
-  const loadModel = useCallback(async () => {
-    setLoadError(null);
-    try {
-      const analyzer = createAnalyzer();
-      await analyzer.load();
-      analyzerRef.current = analyzer;
-      dispatch({ type: 'MODEL_LOADED' });
-    } catch (err) {
-      setLoadError(err instanceof Error ? err.message : 'Failed to load model');
-    }
-  }, [dispatch]);
-
-  useEffect(() => {
-    loadModel();
-  }, [loadModel]);
 
   // Register service worker and listen for updates
   useEffect(() => {
@@ -46,27 +29,11 @@ function AppInner() {
     }
   }, [dispatch]);
 
-  // Show loading screen while model is initializing
-  if (state.isModelLoading) {
+  if (permissionState !== 'granted') {
     return (
       <LoadingScreen
-        error={loadError}
         permissionState={permissionState}
         isIos={isIos}
-        onRetry={loadModel}
-        onRequestPermission={requestPermission}
-      />
-    );
-  }
-
-  // Handle permission errors on camera screen
-  if (permissionState !== 'granted' && state.screen === 'camera') {
-    return (
-      <LoadingScreen
-        error={null}
-        permissionState={permissionState}
-        isIos={isIos}
-        onRetry={() => {}}
         onRequestPermission={requestPermission}
       />
     );
@@ -104,7 +71,7 @@ function AppInner() {
     default:
       return (
         <CameraView
-          analyzer={analyzerRef.current!}
+          analyzer={analyzerRef.current}
           onHistorySave={history.saveEntry}
           historyAvailable={history.isAvailable}
           saveError={history.saveError}

@@ -12,7 +12,6 @@ interface HeatmapOverlayProps {
 /**
  * Maps a heatmap value [0, 1] to an RGB color via HSV interpolation:
  * 0.0 → blue (H=240°), 0.5 → yellow (H=60°), 1.0 → red (H=0°)
- * Interpolates linearly (decreasing hue) through these stops.
  */
 function heatmapValueToRgb(value: number): [number, number, number] {
   const v = Math.max(0, Math.min(1, value));
@@ -38,47 +37,6 @@ function heatmapValueToRgb(value: number): [number, number, number] {
   return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
 }
 
-/**
- * Bilinear interpolation of a small grid to a larger display size.
- */
-function bilinearInterpolate(
-  grid: Float32Array,
-  gridW: number,
-  gridH: number,
-  outW: number,
-  outH: number
-): Float32Array {
-  const out = new Float32Array(outW * outH);
-
-  for (let y = 0; y < outH; y++) {
-    for (let x = 0; x < outW; x++) {
-      const gx = outW > 1 ? (x / (outW - 1)) * (gridW - 1) : 0;
-      const gy = outH > 1 ? (y / (outH - 1)) * (gridH - 1) : 0;
-
-      const x0 = Math.floor(gx);
-      const y0 = Math.floor(gy);
-      const x1 = Math.min(x0 + 1, gridW - 1);
-      const y1 = Math.min(y0 + 1, gridH - 1);
-
-      const fx = gx - x0;
-      const fy = gy - y0;
-
-      const v00 = grid[y0 * gridW + x0];
-      const v10 = grid[y0 * gridW + x1];
-      const v01 = grid[y1 * gridW + x0];
-      const v11 = grid[y1 * gridW + x1];
-
-      out[y * outW + x] =
-        v00 * (1 - fx) * (1 - fy) +
-        v10 * fx * (1 - fy) +
-        v01 * (1 - fx) * fy +
-        v11 * fx * fy;
-    }
-  }
-
-  return out;
-}
-
 export function HeatmapOverlay({
   heatmap,
   heatmapWidth,
@@ -98,18 +56,22 @@ export function HeatmapOverlay({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const interpolated = bilinearInterpolate(heatmap, heatmapWidth, heatmapHeight, displayWidth, displayHeight);
-    const imageData = ctx.createImageData(displayWidth, displayHeight);
+    // Draw heatmap at native resolution onto an offscreen canvas,
+    // then scale it to display size in a single GPU-accelerated drawImage call.
+    const offscreen = new OffscreenCanvas(heatmapWidth, heatmapHeight);
+    const offCtx = offscreen.getContext('2d')!;
+    const imageData = offCtx.createImageData(heatmapWidth, heatmapHeight);
 
-    for (let i = 0; i < interpolated.length; i++) {
-      const [r, g, b] = heatmapValueToRgb(interpolated[i]);
-      imageData.data[i * 4] = r;
+    for (let i = 0; i < heatmap.length; i++) {
+      const [r, g, b] = heatmapValueToRgb(heatmap[i]);
+      imageData.data[i * 4]     = r;
       imageData.data[i * 4 + 1] = g;
       imageData.data[i * 4 + 2] = b;
       imageData.data[i * 4 + 3] = 255;
     }
 
-    ctx.putImageData(imageData, 0, 0);
+    offCtx.putImageData(imageData, 0, 0);
+    ctx.drawImage(offscreen, 0, 0, displayWidth, displayHeight);
   }, [heatmap, heatmapWidth, heatmapHeight, displayWidth, displayHeight]);
 
   return (

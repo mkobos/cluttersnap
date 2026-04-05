@@ -1,18 +1,20 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import basicSsl from '@vitejs/plugin-basic-ssl';
 
 export default defineConfig({
+  server: {
+    https: true,
+    proxy: {
+      '/api': 'http://localhost:8000',
+    },
+  },
   plugins: [
+    basicSsl(),
     react(),
     VitePWA({
       registerType: 'prompt',
-      workbox: {
-        additionalManifestEntries: [
-          { url: '/models/clutter_model.onnx', revision: process.env.VITE_MODEL_VERSION ?? null }
-        ],
-        maximumFileSizeToCacheInBytes: 100 * 1024 * 1024
-      },
       manifest: {
         name: 'Clutter Detector',
         short_name: 'Clutter',
@@ -27,9 +29,6 @@ export default defineConfig({
       }
     })
   ],
-  optimizeDeps: {
-    exclude: ['onnxruntime-web']
-  },
   test: {
     environment: 'jsdom',
     setupFiles: ['./tests/setup.ts'],
