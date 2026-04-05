@@ -1,7 +1,9 @@
 import numpy as np
 
+from .models import AnalysisResult
 
-def generate_mock_result(width: int, height: int, seed: int | None = None) -> dict:
+
+def generate_mock_result(width: int, height: int, seed: int | None = None) -> AnalysisResult:
     """Returns a synthetic clutter score and Gaussian-blob heatmap."""
     rng = np.random.default_rng(seed)
     score = float(rng.uniform(1.0, 10.0))
@@ -25,4 +27,4 @@ def generate_mock_result(width: int, height: int, seed: int | None = None) -> di
     if max_val > 0:
         heatmap /= max_val
 
-    return {"score": score, "heatmap": heatmap.tolist()}
+    return AnalysisResult(score=score, heatmap=heatmap.tolist())

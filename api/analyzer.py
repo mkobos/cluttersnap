@@ -3,6 +3,7 @@ import onnxruntime as ort
 
 from .preprocessor import preprocess_image
 from .eigen_cam import compute_eigen_cam
+from .models import AnalysisResult
 
 
 class OnnxAnalyzer:
@@ -16,10 +17,10 @@ class OnnxAnalyzer:
             providers=["CPUExecutionProvider"],
         )
 
-    def analyze(self, img: np.ndarray) -> dict:
+    def analyze(self, img: np.ndarray) -> AnalysisResult:
         """
         img: HxWx3 uint8 RGB array
-        Returns: {"score": float, "heatmap": list[list[float]]}
+        Returns: AnalysisResult with score and heatmap fields
         """
         if self._session is None:
             raise RuntimeError("OnnxAnalyzer.load() must be called before analyze()")
@@ -36,4 +37,4 @@ class OnnxAnalyzer:
         feature_map = outputs[1]  # (1, C, H_feat, W_feat)
         heatmap = compute_eigen_cam(feature_map, target_h=h, target_w=w)
 
-        return {"score": score, "heatmap": heatmap.tolist()}
+        return AnalysisResult(score=score, heatmap=heatmap.tolist())
